@@ -665,7 +665,7 @@ public class FastKeysKeyboardView extends View {
     @Override protected void onDraw(Canvas c){
         super.onDraw(c);
         float w=getWidth(),h=getHeight();
-        gap=1;
+        gap=dp(3);
         int rows=7;
         keyH=(h-gap*(rows+1))/rows;
 
@@ -726,13 +726,14 @@ public class FastKeysKeyboardView extends View {
 
         y+=keyH+gap;
         drawArrow(c,0,y,keyH,keyH,"↓");
+        float enterW = keyH + gap;
         String[] r4={"ش","س","ی","ب","ل","ت","ا","ک","گ","؛","«"};
-        rowFrom(c,y,keyH,r4);
-        keyWithBackground(c,w-keyH-gap,y,w,y+2*keyH+gap,"Enter",NAVY,ENTER_BG,false);
+        rowFromRightReserved(c,y,keyH,r4,enterW);
 
         y+=keyH+gap;
-        String[] r5={"،","ژ","ذ","ز","گ","چ","پ","ب","ن","م","،","/\n؟"};
-        rowFrom(c,y,keyH,r5);
+        String[] r5={"،","ژ","ذ","ز","گ","چ","پ","ب","ن","م","/\n؟"};
+        rowFromRightReserved(c,y,keyH,r5,enterW);
+        keyWithBackground(c,w-enterW,y-keyH-gap,w,y+keyH+gap,"Enter",NAVY,ENTER_BG,false);
 
         y+=keyH+gap;
         float[] bw={1,1,1,3.9f,1.35f,1.35f,1.15f,1.15f};
@@ -818,6 +819,21 @@ public class FastKeysKeyboardView extends View {
         float ww=(available-gap*(labels.length+1))/labels.length;
         for(String s:labels){
             key(c,x,y,x+ww,y+keyH,s,BLUE,false);
+            x+=ww+gap;
+        }
+    }
+
+    private void rowFromRightReserved(Canvas c,float y,float left,String[] labels,float reservedRight){
+        float x=left+gap;
+        float available=getWidth()-left-reservedRight-gap;
+        float ww=(available-gap*(labels.length+1))/labels.length;
+        for(String s:labels){
+            if(s.contains("\n")){
+                key(c,x,y,x+ww,y+keyH,"",BLUE,false);
+                String[] a=s.split("\n");
+                txt(c,a[0],x+ww/2,y+keyH*.35f,Math.min(20,keyH*.3f),NAVY);
+                txt(c,a[1],x+ww/2,y+keyH*.7f,Math.min(20,keyH*.3f),NAVY);
+            } else key(c,x,y,x+ww,y+keyH,s,BLUE,false);
             x+=ww+gap;
         }
     }
@@ -918,8 +934,19 @@ public class FastKeysKeyboardView extends View {
         if(row==1){float cw=w/3f;int i=Math.max(0,Math.min(2,(int)(x/cw)));setPressGlow(i*cw,t,(i+1)*cw,b,held);return;}
         if(row==2){float[] wt={.55f,.9f,.9f,.9f,.9f,.9f,.9f,.9f,.9f,.9f,.9f,.9f,.9f,1.45f};float total=0;for(float q:wt)total+=q;float u=(w-gap*(wt.length+1))/total;for(int i=0;i<wt.length;i++){r=l+u*wt[i];if(x>=l&&x<=r){setPressGlow(l,t,r,b,held);return;}l=r+gap;}return;}
         if(row==3){float left=keyH+gap,capsW=keyH*.62f,magW=keyH*.62f,available=w-left-gap,normalW=(available-capsW-magW-gap*16)/13f,x0=left+gap;if(x>=x0&&x<x0+capsW){setPressGlow(x0,t,x0+capsW,b,held);return;}x0+=capsW+gap;if(x>=x0&&x<x0+magW){setPressGlow(x0,t,x0+magW,b,held);return;}x0+=magW+gap;for(int i=0;i<13;i++){if(x>=x0&&x<=x0+normalW){setPressGlow(x0,t,x0+normalW,b,held);return;}x0+=normalW+gap;}return;}
-        if(row==4){if(x<keyH){setPressGlow(0,t,keyH,b,held);return;}if(x>w-keyH-gap){setPressGlow(w-keyH-gap,t,w,b,held);return;}float left=keyH,available=w-left-gap,cw=(available-gap*12)/11f;int i=Math.max(0,Math.min(10,(int)((x-left)/(cw+gap))));l=left+i*(cw+gap);setPressGlow(l,t,l+cw,b,held);return;}
-        if(row==5){float cw=(w-gap*13)/12f;int i=Math.max(0,Math.min(11,(int)((x-gap)/(cw+gap))));l=gap+i*(cw+gap);setPressGlow(l,t,l+cw,b,held);return;}
+        if(row==4 || row==5){
+            float enterW=keyH+gap;
+            if(x>w-enterW){setPressGlow(w-enterW,t-(row==5?(keyH+gap):0),w,b+(row==4?(keyH+gap):0),held);return;}
+            if(row==4 && x<keyH){setPressGlow(0,t,keyH,b,held);return;}
+            float left=(row==4)?keyH:0;
+            int count=(row==4)?11:11;
+            float available=w-left-enterW-gap;
+            float cw=(available-gap*(count+1))/count;
+            int i=Math.max(0,Math.min(count-1,(int)((x-(left+gap))/(cw+gap))));
+            l=left+gap+i*(cw+gap);
+            setPressGlow(l,t,l+cw,b,held);
+            return;
+        }
         float[] bw={1,1,1,3.9f,1.35f,1.35f,1.15f,1.15f};float total=0;for(float q:bw)total+=q;float u=(w-gap*9)/total;for(int i=0;i<bw.length;i++){r=l+u*bw[i];if(x>=l&&x<=r){setPressGlow(l,t,r,b,held);return;}l=r+gap;}
     }
 
@@ -1009,12 +1036,18 @@ public class FastKeysKeyboardView extends View {
             String[] s={"ض","ص","ث","ق","ف","غ","ع","ه","خ","ج","{","}","|"};
             for(int i=0;i<s.length;i++){if(x>=x0&&x<=x0+normalW){service.type(s[i]);return;}x0+=normalW+gap;} return;
         }
-        if(row==4){
-            if(x<keyH){service.move(KeyEvent.KEYCODE_DPAD_DOWN);return;}
-            if(x>w-keyH-gap){service.enter();return;}
-            float left=keyH,available=w-left-gap,cw=(available-gap*12)/11f;int i=(int)((x-left)/(cw+gap));if(i>=0&&i<11){String[] s={"ش","س","ی","ب","ل","ت","ا","ک","گ","؛","«"};service.type(s[i]);}return;
+        if(row==4 || row==5){
+            float enterW=keyH+gap;
+            if(x>w-enterW){service.enter();return;}
+            if(row==4 && x<keyH){service.move(KeyEvent.KEYCODE_DPAD_DOWN);return;}
+            float left=(row==4)?keyH:0;
+            String[] s=(row==4)?new String[]{"ش","س","ی","ب","ل","ت","ا","ک","گ","؛","«"}:new String[]{"،","ژ","ذ","ز","گ","چ","پ","ب","ن","م","/؟"};
+            float available=w-left-enterW-gap;
+            float cw=(available-gap*(s.length+1))/s.length;
+            int i=(int)((x-(left+gap))/(cw+gap));
+            if(i>=0&&i<s.length){service.type(s[i]);}
+            return;
         }
-        if(row==5){String[] s={"،","ژ","ذ","ز","گ","چ","پ","ب","ن","م","،","/؟"};float cw=(w-gap*13)/12f;int i=Math.max(0,Math.min(11,(int)((x-gap)/(cw+gap))));service.type(s[i]);return;}
         if(row==6){
             float[] bw={1,1,1,3.9f,1.35f,1.35f,1.15f,1.15f};float total=0;for(float q:bw)total+=q;float unit=(w-gap*9)/total,x0=gap;int i=0;for(;i<bw.length;i++){float r=x0+unit*bw[i];if(x>=x0&&x<=r)break;x0=r+gap;}
             if(i==0)service.type("!#@"); else if(i==1)service.switchInputMethod(null); else if(i==2)showEmojiPicker(); else if(i==3)service.type(" "); else if(i==4)service.move(KeyEvent.KEYCODE_DPAD_LEFT); else if(i==5)service.move(KeyEvent.KEYCODE_DPAD_RIGHT); else if(i==6)service.move(KeyEvent.KEYCODE_DPAD_UP); else if(i==7)service.move(KeyEvent.KEYCODE_DPAD_DOWN);
